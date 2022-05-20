@@ -8,15 +8,17 @@ Proyecto final individual - Emile de Kadt
 
 3. [Proceso](#3-proceso)
 
-    1. [Agent.h](#agent-h)
-
 4. [Restricciones](#4-restricciones)
 
 5. [Planteamiento](#5-planteaminto)
 
-6. [Video](#6-vídeo-demostración)
+6. [Proceso](#6-proceso)
 
-7. [Errores](#7-errores)
+7. [Video](#7-vídeo-demostración)
+
+8. [Errores](#8-errores)
+
+9. [Bibliografía](#9-bibliografía)
 
 ## 1. Introducción
 El objetivo de este proyecto es construir una clase "Agente" alternativa a la presentada en la <a href="https://github.com/IAV22-G09/P1">práctica 1 (El Flautista de Hamelin)</a>. Esta versión del agente está pensada para actores con varias acciones breves, varias de ellas con tiempos de recarga, todas con acceso al mismo juego de percepción sensorial. 
@@ -194,7 +196,14 @@ Para mejorar la usabilidad del código, se ocultará todo el sistema de priorida
 
 El agente se expandirá con más miembros opcionales que puedan ser utilizados por todas sus acciones en común, tales como un vector de gameobjects objetivos.
 
-## 6. Video
-## 7. Errores
-## 8. Bibliografia
+## 6. Proceso
+
+Para poder hacer pruebas rápidamente, creé una escena con un recinto cerrado y dos cápsulas de colores: una azul, que usaba el <a href="https://iqcode.com/code/csharp/unity-player-movement-script-3d">controlador de personaje de Max Schulz</a>, y una roja, que llevaría las versiones del agente a probar.
+
+
+## 7. Video
+## 8. Errores
+## 9. Bibliografía
+
+Max Schulz, unity player movement script 3d: https://iqcode.com/code/csharp/unity-player-movement-script-3d
 
