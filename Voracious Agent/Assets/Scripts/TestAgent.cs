@@ -33,14 +33,20 @@ namespace AggressiveAgent
 
             public override void OnActionStart()
             {
-                GameObject p = Instantiate(projectile);
+                GameObject p = Instantiate(projectile, transform.position, Quaternion.identity);
                 Rigidbody rb = p.GetComponent<Rigidbody>();
-                rb.velocity = new Vector3(0f, 10f, 0f);
+                rb.velocity = new Vector3(0f, 2f, 0f);
+                cooldown = 3f;
+            }
+
+            public override void PassiveUpdate()
+            {
+                Debug.Log("Attack cooldown: " + cooldown);
             }
 
             public override bool Conditions()
             {
-                return((target.position - transform.position).magnitude < 5);
+                return((target.position - transform.position).magnitude < 2);
             }
         }
 

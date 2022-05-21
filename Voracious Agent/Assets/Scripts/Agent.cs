@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 
 namespace AggressiveAgent
 {
@@ -44,7 +45,7 @@ namespace AggressiveAgent
             /// </summary>
             public float getPriority()
             {
-                return lockAction ? float.MinValue : Conditions() && cooldown != 0f ? priority : float.MaxValue;
+                return lockAction ? float.MinValue : (Conditions() || isDefault) && cooldown <= 0f ? priority : float.MaxValue;
             }
 
             /// <summary>
@@ -60,7 +61,7 @@ namespace AggressiveAgent
             /// <summary>
             /// Makes the action valid as a default action, but DOES NOT make it the default action of an agent
             /// </summary>
-            public virtual void SetDefaultValues() { priority = 0f; hasCooldown = false; }
+            public virtual void SetDefaultValues() { isDefault = true; priority = 0f; hasCooldown = false; }
 
             /// <summary>
             /// This method is private to ensure that the passiveUpdate can be safely overloaded without breaking cooldowns
@@ -69,7 +70,6 @@ namespace AggressiveAgent
             {
                 PassiveUpdate();
                 if (cooldown > 0f) cooldown -= Time.deltaTime;
-                if (cooldown < 0f) cooldown = 0f;
             }
 
             protected Agent agent;
@@ -98,11 +98,19 @@ namespace AggressiveAgent
                     return _cooldown; 
                 } 
                 set 
-                { 
-                    _cooldown = Mathf.Abs(value); 
+                {
+                    if (isDefault)
+                        throw new System.Exception("Cannot set cooldown for default action.");
+                    _cooldown = value; 
                     if (value != 0) hasCooldown = true; 
                 } 
             }
+
+            /// <summary>
+            /// Indicates whether the action is default
+            /// Default actions cannot be given cooldowns, and are always considered valid to perform
+            /// </summary>
+            bool isDefault = false;
 
             // Warns the agent if another action CANNOT be started (the current action needs to be completed first)
             public bool lockAction = false;
@@ -200,6 +208,5 @@ namespace AggressiveAgent
 
         protected Action currentAction = null;
         protected Action defaultAction = null;
-
     }
 }

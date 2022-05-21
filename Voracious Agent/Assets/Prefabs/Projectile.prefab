@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6927982965855728600}
   - component: {fileID: 6927982965855728601}
   - component: {fileID: -7611705315492257122}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7db0bbf162538404d8e03326c57c7db5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  time: 2
+  time: 1.5
 --- !u!54 &-7611705315492257122
 Rigidbody:
   m_ObjectHideFlags: 0
