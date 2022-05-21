@@ -816,6 +816,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targets:
   - {fileID: 1024858077}
+  projectile: {fileID: 6927982965855728606, guid: 2dd2bd09ec16f5d4ba532532f28d5c03, type: 3}
 --- !u!1 &1229521181
 GameObject:
   m_ObjectHideFlags: 0
