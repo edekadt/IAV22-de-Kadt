@@ -17,36 +17,59 @@ namespace AggressiveAgent
                 rigidbody = agent_.GetComponent<Rigidbody>();
             }
 
-            // Conditions that must be fulfilled for the action to be performed
-            // For example, a melee attack might require a minimum proximity to a target
+            /// <summary>
+            /// Conditions that must be fulfilled for the action to be performed
+            /// For example, a melee attack might require a minimum proximity to a target
+            /// </summary>
             public virtual bool Conditions() { return true; }
 
-            // Called once each time the action is performed, at the moment it begins
+            /// <summary>
+            /// Called once each time the action is performed, at the moment it begins
+            /// </summary>
             public virtual void OnActionStart() { }
 
-            // Called every frame, regardless of whether action is being performed (necessary for things like controlling priority)
+            /// <summary>
+            /// Called every frame, regardless of whether action is being performed (necessary for things like controlling priority)
+            /// </summary>
             public virtual void PassiveUpdate() { }
 
-            // Called every frame while the action is being performed
+            /// <summary>
+            /// Called every frame while the action is being performed
+            /// </summary>
             public virtual void ActiveUpdate() { }
 
-            // If the action has not finished, it has higher priority than any other
-            // If the conditions are not fulfilled, it has lower priority than any other
+            /// <summary>
+            /// If the action has not finished, it has higher priority than any other
+            /// If the conditions are not fulfilled, it has lower priority than any other
+            /// </summary>
             public float getPriority()
             {
-                return lockAction ? float.MinValue : Conditions() ? priority : float.MaxValue;
+                return lockAction ? float.MinValue : Conditions() && cooldown != 0f ? priority : float.MaxValue;
             }
 
-            // To increase priority, pass negative values (lowest priority value -> will go next)
+            /// <summary>
+            /// To increase priority, pass negative values (lowest priority value -> will go next)
+            /// </summary>
             protected virtual void AddPriority(float increase) { priority += increase; }
-            protected virtual void SetPriority(float priority_) { priority = priority_; }
-            public virtual void SetDefault() { priority = 0f; increasePrioOverTime = 0f; }
 
-            // This method is private to ensure that the passiveUpdate can be safely overloaded without breaking cooldowns
-            public void PassiveUpdateAndPrio()
+            /// <summary>
+            /// Lowest priority value will go next
+            /// </summary>
+            protected virtual void SetPriority(float priority_) { priority = priority_; }
+
+            /// <summary>
+            /// Makes the action valid as a default action, but DOES NOT make it the default action of an agent
+            /// </summary>
+            public virtual void SetDefaultValues() { priority = 0f; hasCooldown = false; }
+
+            /// <summary>
+            /// This method is private to ensure that the passiveUpdate can be safely overloaded without breaking cooldowns
+            /// </summary>
+            public void PassiveUpdateAndCooldown()
             {
                 PassiveUpdate();
-                AddPriority(-increasePrioOverTime * Time.deltaTime);
+                if (cooldown > 0f) cooldown -= Time.deltaTime;
+                if (cooldown < 0f) cooldown = 0f;
             }
 
             protected Agent agent;
@@ -60,8 +83,26 @@ namespace AggressiveAgent
             protected Transform transform = null;
             protected Rigidbody rigidbody = null;
 
-            // Amount that priority increases every second
-            public float increasePrioOverTime = 0f;
+            /// <summary>
+            /// True if the action can be given a cooldown
+            /// </summary>
+            public bool hasCooldown { get; private set; } = false;
+
+            private float _cooldown = 0f;
+            /// <summary>
+            /// Time remaining before the action can be started again
+            /// </summary>
+            public float cooldown {
+                get 
+                {
+                    return _cooldown; 
+                } 
+                set 
+                { 
+                    _cooldown = Mathf.Abs(value); 
+                    if (value != 0) hasCooldown = true; 
+                } 
+            }
 
             // Warns the agent if another action CANNOT be started (the current action needs to be completed first)
             public bool lockAction = false;
@@ -75,12 +116,16 @@ namespace AggressiveAgent
         }
         protected Action AddDefaultAction(Action a)
         {
+            if (defaultAction != null)
+                throw new System.Exception("Agent cannot have 2 default actions.");
             Debug.Log("Adding default action " + a);
-            a.SetDefault();
+            a.SetDefaultValues();
             return AddAction(a);
         }
 
-        // Chooses the next action to be performed
+        /// <summary>
+        /// Chooses the next action to be performed
+        /// </summary>
         private Action GetNextAction()
         {
             float highestPrio = float.MaxValue;
@@ -100,7 +145,6 @@ namespace AggressiveAgent
             AgentAwake();
         }
 
-        // Start is called before the first frame update
         void Start()
         {
             AgentStart();
@@ -118,7 +162,7 @@ namespace AggressiveAgent
         {
             foreach (Action a in actions)
             {
-                if (a.getPriority() == 0f && a.increasePrioOverTime == 0f)
+                if (a.getPriority() == 0f && !a.hasCooldown)
                 {
                     defaultAction = a;
                     break;
@@ -130,14 +174,13 @@ namespace AggressiveAgent
         abstract protected void AgentStart();
         abstract protected void AgentAwake();
 
-        // Update is called once per frame
         void Update()
         {
             Debug.Log("Current action: " + currentAction);
             currentAction.ActiveUpdate();
 
             foreach (Action a in actions)
-                a.PassiveUpdateAndPrio();
+                a.PassiveUpdateAndCooldown();
 
             if (!currentAction.lockAction && actions.Count > 1)
             {
