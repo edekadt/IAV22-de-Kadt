@@ -72,6 +72,16 @@ namespace AggressiveAgent
                 if (cooldown > 0f) cooldown -= Time.deltaTime;
             }
 
+            /// <summary>
+            /// Find an object from the agent's pool of shared objects
+            /// </summary>
+            /// <param name="key"></param>
+            /// <returns></returns>
+            protected GameObject GetSharedObject(string key)
+            {
+                return agent.sharedObjects[key];
+            }
+
             protected Agent agent;
 
             private float priority;
@@ -112,13 +122,14 @@ namespace AggressiveAgent
             /// </summary>
             bool isDefault = false;
 
-            // Warns the agent if another action CANNOT be started (the current action needs to be completed first)
+            /// <summary>
+            /// Warns the agent if another action CANNOT be started (the current action needs to be completed first)
+            /// </summary>
             public bool lockAction = false;
         }
 
         protected Action AddAction(Action a)
         {
-            Debug.Log("Adding action " + a);
             actions.Add(a);
             return a;
         }
@@ -126,7 +137,6 @@ namespace AggressiveAgent
         {
             if (defaultAction != null)
                 throw new System.Exception("Agent cannot have 2 default actions.");
-            Debug.Log("Adding default action " + a);
             a.SetDefaultValues();
             return AddAction(a);
         }
@@ -150,6 +160,7 @@ namespace AggressiveAgent
 
         private void Awake()
         {
+            sharedObjects.Initialize();
             AgentAwake();
         }
 
@@ -179,12 +190,11 @@ namespace AggressiveAgent
         }
 
         // Overloadable methods for child classes to use
-        abstract protected void AgentStart();
-        abstract protected void AgentAwake();
+        virtual protected void AgentStart() { }
+        virtual protected void AgentAwake() { }
 
         void Update()
         {
-            Debug.Log("Current action: " + currentAction);
             currentAction.ActiveUpdate();
 
             foreach (Action a in actions)
@@ -200,10 +210,14 @@ namespace AggressiveAgent
             }
         }
 
-        // Other objects that the agent takes into account
-        public GameObject[] targets;
+        /// <summary>
+        /// A pool of gameobjects that any action can access
+        /// </summary>
+        public SerializableDictionary sharedObjects;
 
-        // Iterable list of actions
+        /// <summary>
+        /// Iterable list of actions
+        /// </summary>
         private IList<Action> actions = new List<Action>();
 
         protected Action currentAction = null;
