@@ -198,7 +198,31 @@ El agente se expandirá con más miembros opcionales que puedan ser utilizados p
 
 ## 6. Proceso
 
+### Escenario
 Para poder hacer pruebas rápidamente, creé una escena con un recinto cerrado y dos cápsulas de colores: una azul, que usaba el <a href="https://iqcode.com/code/csharp/unity-player-movement-script-3d">controlador de personaje de Max Schulz</a>, y una roja, que llevaría las versiones del agente a probar.
+
+### Cooldowns
+El sistema de prioridades variables con el tiempo que usaba el código original era muy poco intuitivo para el uso. Eliminé todo el código relacionado al incremento de prioridad temporal, y lo cambié por un sistema de cooldown. Desde el punto de vista del usuario, solo hay que escribir la línea 
+```c#
+cooldown = 3f;
+```
+en el momento deseado para poner la acción en cooldown durante tres segundos.
+
+### Acción base
+Para añadir robustez a la clase, implementé las acciones base (DefaulAction). Se trata de asegurar que haya al menos una acción del agente que esté disponible en todo momento. Internamente, esta puede ser cualquier acción que tenga prioridad 0, ninguna precondición y ningún cooldown. Adicionalmente, una vez una acción esté marcada como acción base, no se le puede asignar ningún cooldown. El agente se asegura de siempre tener una sola acción base.
+Hay un método público de las acciones que les asigna todos los valores necesarios para ser compatibles como acción base, pero para asignarla como acción base de un agente, hay que llamar al agente.
+Hay varios chequeos para asegurar que se haga un uso correcto de estas acciones, lanzándose una excepción particular por cada incumplimiento de este.
+
+### Diccionario de objetos compartidos
+Un problema que me estaba encontrando en mis pruebas era que muchas acciones de un mismo agente necesitaban referencias a la misma serie de objetos. Para evitar que el usuario tuviese que manualmente escribir referencias en cada acción, y pedírselas al agente con un cast, añadí a la clase agente base una lista de objetos a los que todas sus acciones podrían acceder.
+Esto funcionaba bien, pero requería una revisión frecuente del índice de cada objeto en la lista. Para hacerlo más cómodo, cambié la lista por un diccionario.
+La clase Dictionary de c# no es serializable en Unity. Para poder rellenar el diccionario desde el editor, tuve que implementar la clase SerializableDictionary, que hace de envoltorio a un diccionario de strings a GameObjects.
+
+El uso de este diccionario es el siguiente:
+Desde el editor, asignar tantos gameobjects y strings como se desee en la propiedad SharedObjects del agente.
+Desde el código de cualquier acción, hacer la llamada GetSharedObject("Nombre del objeto")
+
+Si la lista incluye nombres u objetos vacíos, o si las dos listas tienen diferente longitud, se lanza una excepción descriptiva.
 
 
 ## 7. Video
