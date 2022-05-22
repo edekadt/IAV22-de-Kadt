@@ -20,6 +20,10 @@ public class SerializableDictionary
         dictionary = new Dictionary<string, GameObject>();
         for (int i = 0; i < keys.Count; ++i)
         {
+            if (keys[i] == "")
+                throw new System.Exception("Key for gameobject " + i + " must be a valid string");
+            if (objects[i] == null)
+                throw new System.Exception("Gameobject " + i + " must be a valid gameobject");
             dictionary.Add(keys[i], objects[i]);
         }
     }
