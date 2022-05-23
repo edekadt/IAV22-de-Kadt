@@ -318,7 +318,7 @@ namespace AggressiveAgent
                     currentAction.ResetSetUp();
                 }
             }
-            if (printCurrentAction = true)
+            if (printCurrentAction)
                 Debug.Log("Current action: " + currentAction);
         }
 
