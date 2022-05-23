@@ -155,6 +155,30 @@ namespace AggressiveAgent
             }
 
             /// <summary>
+            /// Starts a coroutine
+            /// </summary>
+            /// <param name="coroutine"></param>
+            protected void StartCoroutine(IEnumerator coroutine)
+            {
+                agent.StartCoroutine(coroutine);
+            }
+
+            /// <summary>
+            /// Unlocks the action after a number of seconds
+            /// </summary>
+            /// <returns></returns>
+            protected void unlockIn(float time)
+            {
+                StartCoroutine(_unlockAction(time));
+            }
+
+            private IEnumerator _unlockAction(float time)
+            {
+                yield return new WaitForSeconds(time);
+                lockAction = false;
+            }
+
+            /// <summary>
             /// Find an object from the agent's pool of shared objects
             /// </summary>
             /// <param name="key"></param>
