@@ -341,9 +341,6 @@ List<SetUpAction> setUpActions = new List<SetUpAction>();
 private bool allSetUpsComplete = true;
 ```
 
-### Uso de componentes de percepción
-
-
 ## 7. Video
 ## 8. Errores
 ## 9. Bibliografía
