@@ -11,10 +11,10 @@ TagManager:
   - 
   - Water
   - UI
-  - Actors
-  - Clouds
+  - Enemy
+  - Projectiles
   - Player
-  - 
+  - Knight
   - 
   - 
   - 

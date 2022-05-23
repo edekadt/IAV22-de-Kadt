@@ -46,11 +46,33 @@ namespace AggressiveAgent
             }
         }
 
+        protected class Shoot : Action
+        {
+            public Shoot(Agent agent_) : base(agent_, -1)
+            {
+                target = GetSharedObject("Knight").transform;
+                forehead = GetSharedObject("Forehead").transform;
+                seeker = GetSharedObject("Seeker");
+            }
+
+            GameObject seeker;
+            Transform forehead;
+            public override void OnActionStart()
+            {
+                GameObject seekerInstance = Instantiate(seeker, forehead.position, Quaternion.identity);
+                seekerInstance.GetComponent<Seek>().target = target;
+                Vector3 impulse = 10 * (new Vector3(target.position.x, transform.position.y, target.position.z) - transform.position).normalized;
+                seekerInstance.GetComponent<Rigidbody>().AddForce(impulse, ForceMode.Impulse);
+                cooldown = 2f;
+            }
+        }
+
         override protected void AgentStart()
         {
             //printCurrentAction = true;
             Hover hover = (Hover)(AddDefaultAction(new Hover(this)));
             Teleport teleport = (Teleport)(AddAction(new Teleport(this)));
+            Shoot shoot = (Shoot)(AddAction(new Shoot(this)));
         }
     }
 }
