@@ -14,7 +14,6 @@ namespace AggressiveAgent
             {
                 agent = agent_;
                 priority = priority_;
-                transform = agent_.GetComponent<Transform>();
                 rigidbody = agent_.GetComponent<Rigidbody>();
             }
 
@@ -166,8 +165,7 @@ namespace AggressiveAgent
             // Not necessary for all actions, but many involve a target
             public Transform target = null;
 
-            // References for child classes to use
-            protected Transform transform = null;
+            // Reference for child classes to use
             protected Rigidbody rigidbody = null;
 
             /// <summary>
@@ -231,6 +229,8 @@ namespace AggressiveAgent
             /// Indicated whether all set-up action have been performed enough times
             /// </summary>
             private bool allSetUpsComplete = true;
+
+            public Transform transform { get { return agent.gameObject.transform; } }
         }
 
         protected Action AddAction(Action a)
@@ -279,6 +279,7 @@ namespace AggressiveAgent
             if (defaultAction == null) FindDefaultAction();
             if (defaultAction == null)
                 throw new System.Exception("Agent created with no default action.");
+            currentAction.OnActionStart();
         }
 
         // If a default action has not been set, we find one that works as default
@@ -317,6 +318,8 @@ namespace AggressiveAgent
                     currentAction.ResetSetUp();
                 }
             }
+            if (printCurrentAction = true)
+                Debug.Log("Current action: " + currentAction);
         }
 
         /// <summary>
@@ -331,5 +334,10 @@ namespace AggressiveAgent
 
         protected Action currentAction = null;
         protected Action defaultAction = null;
+
+        /// <summary>
+        /// If true, will write the current action in Unity console every frame
+        /// </summary>
+        public bool printCurrentAction = false;
     }
 }
