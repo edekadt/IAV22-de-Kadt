@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using UnityEngine;
 
 namespace AggressiveAgent
@@ -68,11 +69,13 @@ namespace AggressiveAgent
             Transform forehead;
             public override void OnActionStart()
             {
+                lockAction = true;
                 GameObject seekerInstance = Instantiate(seeker, forehead.position, Quaternion.identity);
                 seekerInstance.GetComponent<Seek>().target = target;
                 Vector3 impulse = 10 * (new Vector3(target.position.x, transform.position.y, target.position.z) - transform.position).normalized;
                 seekerInstance.GetComponent<Rigidbody>().AddForce(impulse, ForceMode.Impulse);
                 cooldown = 2f;
+                unlockIn(0.4f);
             }
         }
 
@@ -82,16 +85,19 @@ namespace AggressiveAgent
             {
                 target = GetSharedObject("Knight").transform;
                 startingHeight = transform.position.y;
+                faceTarget = agent.gameObject.GetComponent<FaceTarget>();
             }
+            FaceTarget faceTarget;
             float distanceAbove = 10;
             float startingHeight;
 
             public override void OnActionStart()
             {
                 lockAction = true;
+                faceTarget.enabled = false;
                 Teleport(target.position + new Vector3(0, distanceAbove, 0));
                 rigidbody.AddForce(new Vector3(0, 3, 0), ForceMode.Impulse);
-                agent.StartCoroutine(GroundSlam());
+                StartCoroutine(GroundSlam());
             }
 
             public override void ActiveUpdate()
@@ -105,12 +111,20 @@ namespace AggressiveAgent
             public override void OnCollision(Collision collision)
             {
                 Teleport(new Vector3(0f, -25f, 0f));
-                agent.StartCoroutine(ReturnToMap());
+                StartCoroutine(ReturnToMap());
+                faceTarget.enabled = true;
             }
 
             private IEnumerator GroundSlam()
             {
-                yield return new WaitForSeconds(0.5f);
+                float rotation = 0f;
+                float time = 0f;
+                while (time < 0.9)
+                {
+                    time += Time.deltaTime;
+                    transform.Rotate(new Vector3(1f, 0f, 0f), Time.deltaTime * 110f / 0.9f);
+                    yield return null;
+                }
                 rigidbody.AddForce(new Vector3(0, -60, 0), ForceMode.Impulse);
             }
 
@@ -124,6 +138,64 @@ namespace AggressiveAgent
             }
         }
 
+        protected class CircleChase : TeleportationAction
+        {
+            public CircleChase(Agent agent_) : base(agent_, -6)
+            {
+                target = GetSharedObject("Knight").transform;
+                circle = GetSharedObject("Circle");
+                circle.transform.localScale = new Vector3(0f, 0f, 0f);
+                faceTarget = agent.gameObject.GetComponent<FaceTarget>();
+            }
+
+            GameObject circle;
+            float deployTime = 1.8f;
+            FaceTarget faceTarget;
+
+            public override void OnActionStart()
+            {
+                lockAction = true;
+                float x = Random.Range(-20, 20), z = Random.Range(-20, 20);
+                Teleport(new Vector3(x, rigidbody.position.y, z));
+                StartCoroutine(DeployOrbs());
+                cooldown = 8f;
+            }
+
+            public override bool Conditions()
+            {
+                return Mathf.Abs(target.position.x) < 10f && Mathf.Abs(target.position.z) < 10f;
+            }
+
+            private IEnumerator DeployOrbs()
+            {
+                float scale = 0f;
+                while (scale < 1f)
+                {
+                    scale += Time.deltaTime / deployTime;
+                    circle.transform.localScale = new Vector3(scale, scale, scale);
+                    yield return null;
+                }
+                StartCoroutine(CrossArena());
+            }
+
+            private IEnumerator CrossArena()
+            {
+                faceTarget.enabled = false;
+                Vector3 direction = (target.position - transform.position);
+                direction.y = 0f;
+                direction.Normalize();
+                while (Mathf.Abs(transform.position.x) < 21 && Mathf.Abs(transform.position.z) < 21)
+                {
+                    rigidbody.velocity = direction * 16;
+                    yield return null;
+                }
+                faceTarget.enabled = true;
+                circle.transform.localScale = new Vector3(0f, 0f, 0f);
+                rigidbody.velocity = new Vector3(0f, 0f, 0f);
+                unlockIn(0.4f);
+            }
+        }
+
         override protected void AgentStart()
         {
             //printCurrentAction = true;
@@ -132,6 +204,8 @@ namespace AggressiveAgent
             Shoot shoot = (Shoot)(AddAction(new Shoot(this)));
             Slam slam = (Slam)(AddAction(new Slam(this)));
             slam.AddSetupAction(shoot, 4);
+            CircleChase chase = (CircleChase)(AddAction(new CircleChase(this)));
+            chase.AddSetupAction(slam);
         }
     }
 }
