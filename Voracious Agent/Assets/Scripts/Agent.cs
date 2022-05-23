@@ -47,6 +47,12 @@ namespace AggressiveAgent
             public virtual void ActiveUpdate() { }
 
             /// <summary>
+            /// Called when the agent detects a collision while this action is being performed
+            /// </summary>
+            /// <param name="collision"></param>
+            public virtual void OnCollision(Collision collision) { }
+
+            /// <summary>
             /// If the action has not finished, it has higher priority than any other
             /// If the conditions are not fulfilled, it has lower priority than any other
             /// </summary>
@@ -282,6 +288,12 @@ namespace AggressiveAgent
             currentAction.OnActionStart();
         }
 
+        private void OnCollisionEnter(Collision collision)
+        {
+            AgentOnCollision(collision);
+            currentAction.OnCollision(collision);
+        }
+
         // If a default action has not been set, we find one that works as default
         private void FindDefaultAction()
         {
@@ -298,6 +310,7 @@ namespace AggressiveAgent
         // Overloadable methods for child classes to use
         virtual protected void AgentStart() { }
         virtual protected void AgentAwake() { }
+        virtual protected void AgentOnCollision(Collision collision) { }
 
         void Update()
         {
