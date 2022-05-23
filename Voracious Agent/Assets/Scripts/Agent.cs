@@ -25,6 +25,14 @@ namespace AggressiveAgent
             public virtual bool Conditions() { return true; }
 
             /// <summary>
+            /// Accounts for cooldowns, set-up actions and scriptable conditions
+            /// </summary>
+            private bool _AllConditions()
+            {
+                return (Conditions() || isDefault) && cooldown <= 0f && allSetUpsComplete;
+            }
+
+            /// <summary>
             /// Called once each time the action is performed, at the moment it begins
             /// </summary>
             public virtual void OnActionStart() { }
@@ -45,7 +53,7 @@ namespace AggressiveAgent
             /// </summary>
             public float getPriority()
             {
-                return lockAction ? float.MinValue : (Conditions() || isDefault) && cooldown <= 0f ? priority : float.MaxValue;
+                return lockAction ? float.MinValue : _AllConditions() ? priority : float.MaxValue;
             }
 
             /// <summary>
@@ -64,12 +72,81 @@ namespace AggressiveAgent
             public virtual void SetDefaultValues() { isDefault = true; priority = 0f; hasCooldown = false; }
 
             /// <summary>
-            /// This method is private to ensure that the passiveUpdate can be safely overloaded without breaking cooldowns
+            /// Adds an action that must be performed at least once before each time this action can be performed.
+            /// To require multiple uses of the action beforehand, use the second parameter.
+            /// </summary>
+            public void AddSetupAction(Action action, uint n = 1)
+            {
+                allSetUpsComplete = false;
+
+                SetUpAction setUp;
+                setUp.action = action;
+                setUp.necessaryCount = n;
+                setUp.count = 0;
+                setUpActions.Add(setUp);
+
+                action.AddFollowUpAction(this);
+            }
+
+            /// <summary>
+            /// Adds an action that must notify this one each time it is performed
+            /// </summary>
+            /// <param name="action"></param>
+            protected void AddFollowUpAction(Action action)
+            {
+                followUpActions.Add(action);
+            }
+
+            /// <summary>
+            /// This method exists to ensure that PassiveUpdate() can be safely overloaded without breaking cooldowns
             /// </summary>
             public void PassiveUpdateAndCooldown()
             {
                 PassiveUpdate();
                 if (cooldown > 0f) cooldown -= Time.deltaTime;
+            }
+
+            /// <summary>
+            /// Notifies all follow-up action of this action starting
+            /// </summary>
+            public void NotifyChains()
+            {
+                foreach(Action a in followUpActions)
+                {
+                    a.OnSetupAction(this);
+                }
+            }
+
+            /// <summary>
+            /// Upon starting the action, reset the count of all set up actions
+            /// </summary>
+            public void ResetSetUp()
+            {
+                allSetUpsComplete = setUpActions.Count == 0;
+                for (int i = 0; i < setUpActions.Count; ++i)
+                    setUpActions[i].Reset();
+            }
+
+            /// <summary>
+            /// When one of the action's set-ups begins, check to see if action is available now
+            /// </summary>
+            /// <param name="a"></param>
+            protected void OnSetupAction(Action a)
+            {
+                int i = 0;
+                while (i < setUpActions.Count && setUpActions[i].action != a) { ++i; }
+                if (i == setUpActions.Count) throw new System.Exception("Action notified by unrecognized set-up action.");
+
+                if ((++setUpActions[i]).count >= setUpActions[i].necessaryCount)
+                {
+                    allSetUpsComplete = true;
+                    foreach (SetUpAction setUp in setUpActions)
+                        if (setUp.count < setUp.necessaryCount)
+                        {
+                            allSetUpsComplete = false;
+                            break;
+                        }
+                }
             }
 
             /// <summary>
@@ -126,6 +203,34 @@ namespace AggressiveAgent
             /// Warns the agent if another action CANNOT be started (the current action needs to be completed first)
             /// </summary>
             public bool lockAction = false;
+
+
+            /// <summary>
+            /// List of actions that can´t be performed before this one
+            /// </summary>
+            List<Action> followUpActions = new List<Action>();
+
+            struct SetUpAction
+            {
+                public Action action;
+                public uint necessaryCount;
+                public uint count;
+                public void Reset()
+                {
+                    count = 0;
+                }
+                private SetUpAction(Action a, uint _necessary, uint _count) { action = a; necessaryCount = _necessary; count = _count; }
+                public static SetUpAction operator ++(SetUpAction a) => new SetUpAction(a.action, a.necessaryCount, a.count + 1);
+            }
+            /// <summary>
+            /// List of actions that must be performed at least once before each time this one is
+            /// </summary>
+            List<SetUpAction> setUpActions = new List<SetUpAction>();
+
+            /// <summary>
+            /// Indicated whether all set-up action have been performed enough times
+            /// </summary>
+            private bool allSetUpsComplete = true;
         }
 
         protected Action AddAction(Action a)
@@ -206,7 +311,11 @@ namespace AggressiveAgent
                 GetNextAction();
                 // Only call OnActionStart if the action changes
                 if (currentAction != previous)
+                {
                     currentAction.OnActionStart();
+                    currentAction.NotifyChains();
+                    currentAction.ResetSetUp();
+                }
             }
         }
 

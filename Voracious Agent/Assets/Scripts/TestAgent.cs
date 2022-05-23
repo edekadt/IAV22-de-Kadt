@@ -35,6 +35,7 @@ namespace AggressiveAgent
 
             public override void OnActionStart()
             {
+                Debug.Log("Attack");
                 GameObject p = Instantiate(projectile, transform.position, Quaternion.identity);
                 Rigidbody rb = p.GetComponent<Rigidbody>();
                 rb.velocity = new Vector3(0f, 2f, 0f);
@@ -51,7 +52,7 @@ namespace AggressiveAgent
         {
             public Duplicate(Agent agent_): base(agent_, -50) 
             {
-                cooldown = 4f;
+                cooldown = 7f;
                 duplicate = GetSharedObject("Duplicate");
                 projectile = GetSharedObject("Projectile");
             }
@@ -59,7 +60,7 @@ namespace AggressiveAgent
             public GameObject duplicate;
             public GameObject projectile;
             float duplicationShunt = 15f;
-            int numDuplicates = 1;
+            int numDuplicates = 12;
 
             public override void OnActionStart()
             {
@@ -74,7 +75,7 @@ namespace AggressiveAgent
                     TestAgent ta = d.GetComponent<TestAgent>();
                     ta.sharedObjects = new SerializableDictionary(in agent.sharedObjects);
                 }
-                cooldown = 20f;
+                cooldown = 8f;
             }
 
             public override bool Conditions()
@@ -93,6 +94,8 @@ namespace AggressiveAgent
 
             Duplicate dupe = (Duplicate)(AddAction(new Duplicate(this)));
             dupe.target = sharedObjects["Player"].GetComponent<Transform>();
+
+            attack.AddSetupAction(dupe);
         }
     }
 }

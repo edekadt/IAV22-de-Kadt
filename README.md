@@ -6,7 +6,7 @@ Proyecto final individual - Emile de Kadt
 
 2. [Punto de partida](#2-punto-de-partida)
 
-3. [Proceso](#3-proceso)
+3. [Tareas](#3-tareas)
 
 4. [Restricciones](#4-restricciones)
 
@@ -171,14 +171,12 @@ Agent::Agent()
         }
 ```
 
-## 3. Proceso
-
-### TAREAS:
+## 3. Tareas
 1. Adaptar el código original a Unity y C#.
 2. Mejorar la usabilidad y el encapsulamiento de la clase.
 3. Crear interfaz de usuario simple y comprensible.
 4. Documentar modo de uso.
-4. Integrar soporte para algunas funcionalidades independientes de Unity.
+4. Integrar soporte para algunas funcionalidades de Unity independientes.
 5. Crear ejemplos de funcionamiento.
 
 ## 4. Restricciones
@@ -196,7 +194,13 @@ Para mejorar la usabilidad del código, se ocultará todo el sistema de priorida
 
 El agente se expandirá con más miembros opcionales que puedan ser utilizados por todas sus acciones en común, tales como un vector de gameobjects objetivos.
 
+Se añadirá un sistema de cooldown más simple de entender y utilizar.
+
+Se añadirá toda clase de comprobaciones de funcionamiento y utilización correctas, lanzando errores descriptivos siempre que sea necesario.
+
 ## 6. Proceso
+
+NOTA: Dado que este proyecto se trata en parte de una modificación de código existente en un lenguaje a código en otro lenguaje, veo poco prudente incluir recortes de pseudocódigo, ya que las diferencias de los lenguajes son importantes en este contexto.
 
 ### Escenario
 Para poder hacer pruebas rápidamente, creé una escena con un recinto cerrado y dos cápsulas de colores: una azul, que usaba el <a href="https://iqcode.com/code/csharp/unity-player-movement-script-3d">controlador de personaje de Max Schulz</a>, y una roja, que llevaría las versiones del agente a probar.
@@ -223,6 +227,121 @@ Desde el editor, asignar tantos gameobjects y strings como se desee en la propie
 Desde el código de cualquier acción, hacer la llamada GetSharedObject("Nombre del objeto")
 
 Si la lista incluye nombres u objetos vacíos, o si las dos listas tienen diferente longitud, se lanza una excepción descriptiva.
+
+### Acciones encadenadas
+Ciertos actores tienen acciones que solo tienen sentido estratégico ser usadas detrás de otras. Ya sería posible programar esto usando las condiciones de cada acción, pero para agilizar mucho el proceso he implementado la funcionalidad de acciones encadenadas (set-up y follow-up).
+Para hacer una cadena con las acciones A y B, es tan sencillo como escribir la siguiente línea desde el AgentStart() del agente:
+```c#
+B.AddSetupAction(A);
+```
+Esto hace que la acción B no se realice hasta que se realice primero la A. Las acciones encadenadas necesitan que se ejecuten todos sus precursores cada vez que se realicen ellas mismas.
+Además, se puede añadir un segundo argumento, que indica el número de veces que se tiene que realizar A antes de que se pueda realizar B:
+```c#
+B.AddSetupAction(A, 3);
+```
+
+La estructura interna de las acciones encadenadas es la siguiente. Para ahorrar eficiencia, no se consulta el estado de todas las acciones precursoras en cada frame; cuando una acción empieza, notifica a todas sus acciones dependientes (de ahí la necesidad de tener dos listas) y solo entonces se comprueba el estado de cada acción precursora. Si se detecta que todas las precursoras se han realizado, se actualiza el valor de allSetUpsComplete, que sí se consulta en cada frame.
+
+```c#
+/// <summary>
+/// Adds an action that must be performed at least once before each time this action can be performed.
+/// To require multiple uses of the action beforehand, use the second parameter.
+/// </summary>
+public void AddSetupAction(Action action, uint n = 1)
+{
+    allSetUpsComplete = false;
+
+    SetUpAction setUp;
+    setUp.action = action;
+    setUp.necessaryCount = n;
+    setUp.count = 0;
+    setUpActions.Add(setUp);
+
+    action.AddFollowUpAction(this);
+}
+
+/// <summary>
+/// Adds an action that must notify this one each time it is performed
+/// </summary>
+/// <param name="action"></param>
+protected void AddFollowUpAction(Action action)
+{
+    followUpActions.Add(action);
+}
+
+
+/// <summary>
+/// Notifies all follow-up action of this action starting
+/// </summary>
+public void NotifyChains()
+{
+    foreach(Action a in followUpActions)
+    {
+        a.OnSetupAction(this);
+    }
+}
+
+/// <summary>
+/// Upon starting the action, reset the count of all set up actions
+/// </summary>
+public void ResetSetUp()
+{
+    allSetUpsComplete = setUpActions.Count == 0;
+    for (int i = 0; i < setUpActions.Count; ++i)
+        setUpActions[i].Reset();
+}
+
+/// <summary>
+/// When one of the action's set-ups begins, check to see if action is available now
+/// </summary>
+/// <param name="a"></param>
+protected void OnSetupAction(Action a)
+{
+    int i = 0;
+    while (i < setUpActions.Count && setUpActions[i].action != a) { ++i; }
+    if (i == setUpActions.Count) throw new System.Exception("Action notified by unrecognized set-up action.");
+
+    if ((++setUpActions[i]).count >= setUpActions[i].necessaryCount)
+    {
+        allSetUpsComplete = true;
+        foreach (SetUpAction setUp in setUpActions)
+            if (setUp.count < setUp.necessaryCount)
+            {
+                allSetUpsComplete = false;
+                break;
+            }
+    }
+}
+
+/// <summary>
+/// List of actions that can´t be performed before this one
+/// </summary>
+List<Action> followUpActions = new List<Action>();
+
+struct SetUpAction
+{
+    public Action action;
+    public uint necessaryCount;
+    public uint count;
+    public void Reset()
+    {
+        count = 0;
+    }
+    private SetUpAction(Action a, uint _necessary, uint _count) { action = a; necessaryCount = _necessary; count = _count; }
+    public static SetUpAction operator ++(SetUpAction a) => new SetUpAction(a.action, a.necessaryCount, a.count + 1);
+}
+/// <summary>
+/// List of actions that must be performed at least once before each time this one is
+/// </summary>
+List<SetUpAction> setUpActions = new List<SetUpAction>();
+
+/// <summary>
+/// Indicated whether all set-up action have been performed enough times
+/// </summary>
+private bool allSetUpsComplete = true;
+```
+
+### Uso de componentes de percepción
 
 
 ## 7. Video

@@ -127,9 +127,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29bc17c8a29ee2b4aa9ed0493ee2c18d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targets:
-  - {fileID: 0}
-  projectile: {fileID: 6927982965855728606, guid: 2dd2bd09ec16f5d4ba532532f28d5c03, type: 3}
+  sharedObjects:
+    keys: []
+    objects: []
 --- !u!114 &5404548348232956909
 MonoBehaviour:
   m_ObjectHideFlags: 0
