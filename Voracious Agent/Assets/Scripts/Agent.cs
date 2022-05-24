@@ -172,7 +172,7 @@ namespace AggressiveAgent
             /// Unlocks the action after a number of seconds
             /// </summary>
             /// <returns></returns>
-            protected void unlockIn(float time)
+            protected void UnlockIn(float time)
             {
                 StartCoroutine(_unlockAction(time));
             }

@@ -75,7 +75,7 @@ namespace AggressiveAgent
                 Vector3 impulse = 10 * (new Vector3(target.position.x, transform.position.y, target.position.z) - transform.position).normalized;
                 seekerInstance.GetComponent<Rigidbody>().AddForce(impulse, ForceMode.Impulse);
                 cooldown = 2f;
-                unlockIn(0.4f);
+                UnlockIn(0.4f);
             }
         }
 
@@ -197,20 +197,19 @@ namespace AggressiveAgent
                 faceTarget.enabled = true;
                 circle.transform.localScale = new Vector3(0f, 0f, 0f);
                 rigidbody.velocity = new Vector3(0f, 0f, 0f);
-                unlockIn(0.4f);
+                UnlockIn(0.4f);
             }
         }
 
         override protected void AgentStart()
         {
             //printCurrentAction = true;
-            Hover hover = (Hover)(AddDefaultAction(new Hover(this)));
-            Blink teleport = (Blink)(AddAction(new Blink(this)));
+            AddDefaultAction(new Hover(this));
+            AddAction(new Blink(this));
             Shoot shoot = (Shoot)(AddAction(new Shoot(this)));
             Slam slam = (Slam)(AddAction(new Slam(this)));
             slam.AddSetupAction(shoot, 4);
-            CircleChase chase = (CircleChase)(AddAction(new CircleChase(this)));
-            chase.AddSetupAction(slam);
+            AddAction(new CircleChase(this)).AddSetupAction(slam);
         }
     }
 }

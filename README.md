@@ -14,11 +14,13 @@ Proyecto final individual - Emile de Kadt
 
 6. [Proceso](#6-proceso)
 
-7. [Video](#7-vídeo-demostración)
+7. [Utilización](#7-utilización)
 
-8. [Errores](#8-errores)
+8. [Vídeo](#8-vídeo)
 
-9. [Bibliografía](#9-bibliografía)
+9. [Errores](#9-errores)
+
+10. [Bibliografía](#10-bibliografía)
 
 ## 1. Introducción
 El objetivo de este proyecto es construir una clase "Agente" alternativa a la presentada en la <a href="https://github.com/IAV22-G09/P1">práctica 1 (El Flautista de Hamelin)</a>. Esta versión del agente está pensada para actores con varias acciones breves, varias de ellas con tiempos de recarga, todas con acceso al mismo juego de percepción sensorial. 
@@ -341,9 +343,108 @@ List<SetUpAction> setUpActions = new List<SetUpAction>();
 private bool allSetUpsComplete = true;
 ```
 
-## 7. Video
-## 8. Errores
-## 9. Bibliografía
+## 7. Utilización
+### Inicio
+Para utilizar la herramienta en un proyecto de Unity, se deben incluir los dos archivos de código Agent.cs y SerializableDictionary.cs.
+
+### Definición de agentes y acciones
+Para definir un agente nuevo, se crea una clase que herede de Agent, dentro del namespace AggressiveAgent. Dentro de esta clase, y como clases protegidas, se definen todas las acciones, heredando cada una de Action.
+Cada acción solo tiene que sobrecargar los métodos deseados para su funcionamiento, de entre los siguientes:
+```c#
+bool Conditions();  // Condiciones que se tienen que satisfacer para que la acción sea elegible
+void OnActionStart();   // Llamado cada vez que la acción se realiza
+void PassiveUpdate();   // Llamado cada frame. Útil para acciones con prioridades variables
+void ActiveUpdate();    // Llamado cada frame mientras la acción está en curso
+void OnCollision(Collision collision); // Llamado cuando el objeto agente detecta una colisión mientras la acción esté en curso
+void OnTrigger(Collider other); // Llamado cuando el objeto agente detecta una colisión de tipo trigger mientras la acción esté en curso
+```
+
+Una vez estén definidas todas las acciones, en el AgentStart() o el AgentAwake() del agente se deben añadir todas a la lista de acciones, con la función AddAction(Action a). Una de las acciones debe estar definida como acción base, usando AddDefaultAction(Action a) en lugar de AddAction.
+Las acciones por defecto no pueden cambiar de prioridad ni tener cooldowns.
+
+La estructura de la clase queda de la siguiente forma:
+```c#
+
+
+namespace AggressiveAgent
+{
+    public class MyAgent : Agent
+    {
+        protected class MyActionA : Action
+        {
+            MyActionA(Agent agent_) : Action(agent_, 0)
+            ...
+        }
+        
+        protected class MyActionB : Action
+        {
+            MyActionB(Agent agent_) : Action(agent_, -3)
+            ...
+        }
+        
+        protected class MyActionC : Action
+        {
+            MyActionC(Agent agent_) : Action(agent_, -5)
+            ...
+        }
+        
+        override protected void AgentStart()
+        {
+            AddDefaultAction(new MyActionA(this));
+            actionB = (MyActionB)(AddAction(new MyActionB(this)));
+            AddAction(new MyActionC(this)).AddSetupAction(actionB, 3);
+        }
+    }
+}
+```
+En el ejemplo anterior, la acción A solo se realizará si las acciones B y C están simultáneamente en cooldown, o no se cumplen sus condiciones. La acción C, a pesar de ser más prioritaria, no se realizará hasta que la acción B se haya realizado 3 veces (explicado en el apartado Acciones Encadenadas).
+
+### Prioridades
+En la constructora de la acción se debe definir su prioridad (0 por defecto) aunque esta se puede cambiar más adelante. 0 es la prioridad de la acción base, y un valor menor se considera más prioritario. Por ejemplo, si hay tres acciones definidas: A, con prioridad 0 (acción base); B, con prioridad -5; y C, con prioridad -20, se relizará primero la C.
+
+### Bloqueo de Acciones
+Por defecto, cualquier acción puede interrumpir otra. Esto es conveniente en algunos casos (interrumpir un movimiento para atacar, por ejemplo). Pero en otros casos, para evitar esto, se puede bloquear el cambio de acción con el miembro lockAction y el método UnlockIn.
+```c#
+lockAction = true;  // bloquea el cambio de acción
+lockAction = false; // habilita de nuevo el cambio de acción
+UnlockIn(3f); // desbloquea la acción al cabo de 3 segundos.
+```
+
+### Cooldowns
+Para que una acción no se pueda realizar constantemente, se le puede asignar un tiempo de enfriamiento. Con la línea 
+```c#
+cooldown = 3f;
+```
+se deshabilita la acción por 3 segundos.
+
+### Acciones Encadenadas
+Aparte del método de condiciones, que es abierto, se proporciona la facilidad de tener acciones que tienen que suceder a otras. Esto se hace con el método AddSetupAction(Action a, int count). Este método hace que una acción no pueda realizarse hasta que la acción que se pase como argumento se haya realizado tantas veces como indique el segundo argumento. Una acción puede tener varias acciones previas, cada una definida aparte.
+Cada vez que se realice una acción, se reinicia la cuenta de todas sus acciones previas.
+
+### Objetos Compartidos
+Frecuentemente, varias de las acciones de un mismo agente requieren referencias a los mismos objetos. Para no tener que declarar campos públicos en el agente y pasarlos a cada acción, existe un campo en todos los agentes llamado Shared Objects. 
+Este campo es visible en el editor, y consta de dos sub-campos: una lista de strings y otra de GameObjects. Desde el editor se pueden llenar estas dos listas con objetos de la escena y claves para estos.
+Para usar estos objetos desde el código de una acción, se llama al método:
+```c#
+GameObject o = GetSharedObject("ObjectName");
+```
+
+### Funcionalidades Adicionales
+Para pillar una referencia al Transform del objeto agente, simplemente escribe transform.
+
+Todas las acciones tienen una referencia al Rigidbody del objeto, si tiene, que se rellena automáticamente.
+
+Para agilizar el uso de corrutinas (parte de los MonoBehaviour, que las acciones no son), se puede obviar la llamada al agente (agent.StartCoroutine()) y escribir directamente StartCoroutine().
+
+Para hacer que una acción sea válida como acción base, existe un método SetDefaultValues(), que hace todos los cambios necesarios. Es importante que esto no asigna la acción como base de su agente, solo la hace compatible.
+
+## 8. Vídeo
+
+## 9. Errores
+En la documentación original indiqué la intención de integrar los sistemas de percepción de Unity en la herramienta. Esto fue un malentendido por mi parte, pues resulta que Unity no tiene un sistema de percepción, es necesario instalar extensiones.
+
+## 10. Bibliografía
 
 Max Schulz, unity player movement script 3d: https://iqcode.com/code/csharp/unity-player-movement-script-3d
+Wello Soft, 10 Skyboxes Pack : Day - Night: https://assetstore.unity.com/packages/2d/textures-materials/sky/10-skyboxes-pack-day-night-32236
 
