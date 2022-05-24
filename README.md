@@ -28,10 +28,9 @@ El objetivo de este proyecto es construir una clase "Agente" alternativa a la pr
 ## 2. Punto de partida
 Este proyecto se basa en una versión primitiva del mismo concepto, en c++, que creé para el motor de juegos <a href="https://github.com/Triturados/Motor">LOVE</a>. Tras haber visto algunas de las limitaciones de esa primera versión (dificultad de uso, elementos poco intuitivos) pondré un mayor enfoque en la usabilidad de esta nueva versión.
 
-El funcionamiento de esta clase se basa en una clase Agent (que era un componente del motor) y su clase interna Action. Agent hace de máquina de estados del actor, abstrayendo la creación y destrucción de las acciones y reproduciendo siempre la que corresponde. Las acciones tienen varias formas de uso, como microcomponentes en su propio derecho. Principalmente se utilizan sobrecargando sus métodos virtuales OnActionStart, ActiveUpdate, PassiveUpdate y ConditionsFulfilled. OnActionStart contiene código que se ejecuta cada vez que se inicia la acción; ActiveUpdate contiene el código que se ejecutará cada frame mientras la acción se esté realizando; y PassiveUpdate contiene código que se ejecutará cada frame, se esté realizando o no la acción (esto se usa principalmente para controlar la prioridad de la acción). Por último, ConditionsFulfilled contiene las condiciones booleanas que necesitan cumplirse para que la acción se comience.
+El funcionamiento de esta herramienta se basa en una clase Agent (que era un componente del motor) y su clase interna Action. Agent hace de máquina de estados del actor, abstrayendo la creación y destrucción de las acciones y reproduciendo siempre la que corresponde. Las acciones tienen varias formas de uso, como microcomponentes en su propio derecho. Principalmente se utilizan sobrecargando sus métodos virtuales OnActionStart, ActiveUpdate, PassiveUpdate y ConditionsFulfilled. OnActionStart contiene código que se ejecuta cada vez que se inicia la acción; ActiveUpdate contiene el código que se ejecutará cada frame mientras la acción se esté realizando; y PassiveUpdate contiene código que se ejecutará cada frame, se esté realizando o no la acción (esto se usa principalmente para controlar la prioridad de la acción). Por último, ConditionsFulfilled contiene las condiciones booleanas que necesitan cumplirse para que la acción se comience.
 
 ### Código original en c++
-### Agent.h <a name="agent-h"></a>
 ```c++
 class Agent : public Component
 		{
@@ -439,6 +438,7 @@ Para agilizar el uso de corrutinas (parte de los MonoBehaviour, que las acciones
 Para hacer que una acción sea válida como acción base, existe un método SetDefaultValues(), que hace todos los cambios necesarios. Es importante que esto no asigna la acción como base de su agente, solo la hace compatible.
 
 ## 8. Vídeo
+<a href="https://youtu.be/WsstgAS51DI">Escena Maestro de Almas</a>
 
 ## 9. Errores
 En la documentación original indiqué la intención de integrar los sistemas de percepción de Unity en la herramienta. Esto fue un malentendido por mi parte, pues resulta que Unity no tiene un sistema de percepción, es necesario instalar extensiones.
