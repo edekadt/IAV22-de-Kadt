@@ -96,7 +96,7 @@ namespace AggressiveAgent
                 lockAction = true;
                 faceTarget.enabled = false;
                 Teleport(target.position + new Vector3(0, distanceAbove, 0));
-                rigidbody.AddForce(new Vector3(0, 3, 0), ForceMode.Impulse);
+                rigidbody.AddForce(new Vector3(0, 12, 0), ForceMode.Impulse);
                 StartCoroutine(GroundSlam());
             }
 
@@ -119,10 +119,11 @@ namespace AggressiveAgent
             {
                 float rotation = 0f;
                 float time = 0f;
-                while (time < 0.9)
+                float turnDuration = 0.8f;
+                while (time < turnDuration)
                 {
                     time += Time.deltaTime;
-                    transform.Rotate(new Vector3(1f, 0f, 0f), Time.deltaTime * 110f / 0.9f);
+                    transform.Rotate(new Vector3(1f, 0f, 0f), Time.deltaTime * 110f / turnDuration);
                     yield return null;
                 }
                 rigidbody.AddForce(new Vector3(0, -60, 0), ForceMode.Impulse);
