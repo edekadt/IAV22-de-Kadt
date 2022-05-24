@@ -51,6 +51,11 @@ namespace AggressiveAgent
             /// </summary>
             /// <param name="collision"></param>
             public virtual void OnCollision(Collision collision) { }
+            /// <summary>
+            /// Called when the agent detects a trigger entry while this action is being performed
+            /// </summary>
+            /// <param name="collision"></param>
+            public virtual void OnTrigger(Collider other) { }
 
             /// <summary>
             /// If the action has not finished, it has higher priority than any other
@@ -318,6 +323,13 @@ namespace AggressiveAgent
             currentAction.OnCollision(collision);
         }
 
+        private void OnTriggerEnter(Collider other)
+        {
+            AgentOnTrigger(other);
+            currentAction.OnTrigger(other);
+        }
+
+
         // If a default action has not been set, we find one that works as default
         private void FindDefaultAction()
         {
@@ -335,6 +347,7 @@ namespace AggressiveAgent
         virtual protected void AgentStart() { }
         virtual protected void AgentAwake() { }
         virtual protected void AgentOnCollision(Collision collision) { }
+        virtual protected void AgentOnTrigger(Collider other) { }
 
         void Update()
         {

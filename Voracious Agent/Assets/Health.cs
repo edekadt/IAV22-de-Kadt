@@ -32,7 +32,6 @@ public class Health : MonoBehaviour
 
     private void TakeDamage()
     {
-        Debug.Log("Hit");
         particles.Play();
         StartCoroutine(AddImmunity(0.8f));
     }

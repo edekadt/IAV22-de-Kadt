@@ -120,7 +120,7 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1991878473110969063}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   m_Radius: 0.5
   m_Height: 2
@@ -693,11 +693,13 @@ MonoBehaviour:
     - Forehead
     - Seeker
     - Circle
+    - CrashParticles
     objects:
     - {fileID: 0}
     - {fileID: 440228798608140363}
     - {fileID: 509602918202469002, guid: 0bafbf8af9fda8c4fa8d62257c13e365, type: 3}
     - {fileID: 3927465526008265396}
+    - {fileID: 0}
   printCurrentAction: 0
 --- !u!114 &1361782517
 MonoBehaviour:
@@ -726,7 +728,7 @@ ParticleSystem:
   cullingMode: 0
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 0
   useUnscaledTime: 0
@@ -1545,7 +1547,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 10
+      scalar: 80
       minScalar: 10
       maxCurve:
         serializedVersion: 2

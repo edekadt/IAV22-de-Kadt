@@ -86,8 +86,10 @@ namespace AggressiveAgent
                 target = GetSharedObject("Knight").transform;
                 startingHeight = transform.position.y;
                 faceTarget = agent.gameObject.GetComponent<FaceTarget>();
+                crashParticles = GetSharedObject("CrashParticles").GetComponent<ParticleSystem>();
             }
             FaceTarget faceTarget;
+            ParticleSystem crashParticles;
             float distanceAbove = 10;
             float startingHeight;
 
@@ -108,11 +110,13 @@ namespace AggressiveAgent
                 rigidbody.AddForce(aimAdjustment * 2, ForceMode.Acceleration);
             }
 
-            public override void OnCollision(Collision collision)
+            public override void OnTrigger(Collider other)
             {
                 Teleport(new Vector3(0f, -25f, 0f));
                 StartCoroutine(ReturnToMap());
                 faceTarget.enabled = true;
+                crashParticles.gameObject.transform.position = transform.position;
+                crashParticles.Play();
             }
 
             private IEnumerator GroundSlam()
